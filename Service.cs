@@ -1,7 +1,8 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Discord.Interactions;
 using Microsoft.VisualBasic;
-using Shel_MeBot;
+using Shel_MeBot_2;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -13,25 +14,25 @@ using System.Text.Json;
 using System.Threading.Channels;
 using System.Xml.Linq;
 
-namespace Shel_MeBot
+namespace Shel_MeBot_2
 {
     public class Service
     {
-        private readonly Bot _bot;
+        private Bot _bot;
 
-        public Service(Bot client)
+        public Service(Bot bot)
         {
-            _bot = client;
+            _bot = bot;
         }
-
-        
 
         public async Task<int> HPChange(string pname, int value)
         {
             try
             {
+                
                 List<Player> players = await Repo.Load();
-                var player = players.FirstOrDefault(p => p.Name == pname);
+                var player = players.FirstOrDefault(p => p.Name.Equals(pname, StringComparison.OrdinalIgnoreCase));
+
 
                 if (player != null)
                 {
@@ -42,13 +43,13 @@ namespace Shel_MeBot
                 else
                 {
                     Console.WriteLine("Player not found");
-                    return 0;
+                    return -404;
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error in HPChange: {ex.Message}");
-                return 0;
+                return -404;
             }
 
         }
@@ -57,35 +58,37 @@ namespace Shel_MeBot
         {
             try
             {
+                
                 List<Player> players = await Repo.Load();
-            var player = players.FirstOrDefault(p => p.Name == pname);
+                var player = players.FirstOrDefault(p => p.Name.Equals(pname, StringComparison.OrdinalIgnoreCase));
 
-            if (player != null)
-            {
-                player.MP += value;
-                await Repo.Save(players);
-                return player.MP;
-            }
-            else
-            {
-                Console.WriteLine("Who is this neguinho?");
-                return 0;
-            }
+                if (player != null)
+                {
+                    player.MP += value;
+                    await Repo.Save(players);
+                    return player.MP;
+                }
+                else
+                {
+                    Console.WriteLine("Who is this neguinho?");
+                    return -404;
+                }
 
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error in MPChange: {ex.Message}");
-                return 0;
-            }   
+                return -404;
+            }
         }
 
         public async Task<int> MindChange(string pname, int value)
         {
             try
             {
+                pname = pname.ToLower();
                 List<Player> players = await Repo.Load();
-                var player = players.FirstOrDefault(p => p.Name == pname);
+                var player = players.FirstOrDefault(p => p.Name.Equals(pname, StringComparison.OrdinalIgnoreCase));
 
                 if (player != null)
                 {
@@ -96,58 +99,60 @@ namespace Shel_MeBot
                 else
                 {
                     Console.WriteLine("Who is this neguinho?");
-                    return 0;
+                    return -404;
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error in MindChange: {ex.Message}");
-                return 0;
+                return -404;
             }
 
-
-
-            }
-
-        public async Task CreatePlayer(string pname, int php, int pmp, int pmind)
-        {
-            try
-            {
-                var players = await Repo.Load();
-                var player = players.FirstOrDefault(p => p.Name == pname);
-
-                if (player != null)
-                {
-                    Console.WriteLine("CreatePlayer: Player already exists.");
-                    return;
-                }
-
-                Player newplayer = new Player();
-                newplayer.Name = pname;
-
-                newplayer.HP = php;
-                newplayer.MaxHP = php;
-
-                newplayer.MP = pmp;
-                newplayer.MaxMP = pmp;
-
-                newplayer.Mind = pmind;
-                newplayer.MaxMind = pmind;
-
-                players.Add(newplayer);
-
-
-                await Repo.Save(players);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error in CreatePlayer: {ex.Message}");
-                return;
-            }
 
 
         }
 
+
+        public async Task CreatePlayer(string pname, int php, int pmp, int pmind)
+           {
+               try
+               {
+
+                   var players = await Repo.Load();
+                   var player = players.FirstOrDefault(p => p.Name == pname);
+
+                   if (player != null)
+                   {
+                       Console.WriteLine("CreatePlayer: Player already exists.");
+                       return;
+                   }
+
+                   Player newplayer = new Player();
+                   newplayer.Name = pname;
+
+                   newplayer.HP = php;
+                   newplayer.MaxHP = php;
+
+                   newplayer.MP = pmp;
+                   newplayer.MaxMP = pmp;
+
+                   newplayer.Mind = pmind;
+                   newplayer.MaxMind = pmind;
+
+                   players.Add(newplayer);
+
+
+                   await Repo.Save(players);
+               }
+               catch (Exception ex)
+               {
+                   Console.WriteLine($"Error in CreatePlayer: {ex.Message}");
+                   return;
+               }
+
+
+           }
+  
         public async Task DeletePlayer(string pname)
         {
             try
@@ -155,7 +160,7 @@ namespace Shel_MeBot
 
                 var players = await Repo.Load();
 
-                players.RemoveAll(p => p.Name == pname);
+                players.RemoveAll(p => p.Name.Equals(pname, StringComparison.OrdinalIgnoreCase));
 
                 await Repo.Save(players);
             }
@@ -166,24 +171,54 @@ namespace Shel_MeBot
             }
         }
 
-        public async Task<Embed?> ShowPlayer(string pname)
+        public async Task<Player?> GetPlayer(string pname)
         {
             try
             {
 
                 var players = await Repo.Load();
-                var player = players.FirstOrDefault(p => p.Name == pname);
+                var player = players.FirstOrDefault(p => p.Name.Equals(pname, StringComparison.OrdinalIgnoreCase));
 
                 if (player == null)
                 {
-                    Console.WriteLine("Player not found");
+                    Console.WriteLine("GetPlayer: Player not found");
+                    return null;
+                }
+
+                if (player.Name == pname)
+                {
+                    return player;
+                }
+                else
+                {
+                    return null;
+                }
+
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in GetPlayer: {ex.Message}");
+                return null;
+            }
+        }
+
+        public async Task<Embed?> ShowEmbed(string pname)
+        {
+            try
+            {
+                var player = await GetPlayer(pname);
+
+                if (player == null)
+                {
+                    Console.WriteLine("ShowEmbed: Player not found");
                     return null;
                 }
 
                 EmbedBuilder embed = new EmbedBuilder()
                 .WithFooter(string.Join(Environment.NewLine, player.Info));
 
-                embed.ImageUrl = player.CharPic;
+                embed.ImageUrl = player.isTransformed ? player.TransPic : player.CharPic;
 
                 embed.Title = player.Name;
 
@@ -202,9 +237,7 @@ namespace Shel_MeBot
                     embed.AddField("🧠 Mind", $"{player.Mind} / {player.MaxMind}", false);
                 }
 
-
                 return embed.Build();
-
             }
             catch (Exception ex)
             {
@@ -253,7 +286,7 @@ namespace Shel_MeBot
             try
             {
                 List<Player> players = await Repo.Load();
-                var player = players.FirstOrDefault(p => p.Name == pname);
+                var player = players.FirstOrDefault(p => p.Name.Equals(pname, StringComparison.OrdinalIgnoreCase));
 
                 if (player != null)
                 {
@@ -264,14 +297,14 @@ namespace Shel_MeBot
                 else
                 {
                     Console.WriteLine("Player not found");
-                    return 0;
+                    return -404;
                 }
 
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error in MaxHPSet: {ex.Message}");
-                return 0;
+                return -404;
             }
 
         }
@@ -282,7 +315,7 @@ namespace Shel_MeBot
             {
 
                 List<Player> players = await Repo.Load();
-                var player = players.FirstOrDefault(p => p.Name == pname);
+                var player = players.FirstOrDefault(p => p.Name.Equals(pname, StringComparison.OrdinalIgnoreCase));
 
                 if (player != null)
                 {
@@ -293,13 +326,13 @@ namespace Shel_MeBot
                 else
                 {
                     Console.WriteLine("Who is this neguinho?");
-                    return 0;
+                    return -404;
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error in MaxMPSet: {ex.Message}");
-                return 0;
+                return -404;
             }
 
         }
@@ -309,7 +342,7 @@ namespace Shel_MeBot
             try
             {
                 List<Player> players = await Repo.Load();
-                var player = players.FirstOrDefault(p => p.Name == pname);
+                var player = players.FirstOrDefault(p => p.Name.Equals(pname, StringComparison.OrdinalIgnoreCase));
 
                 if (player != null)
                 {
@@ -320,13 +353,13 @@ namespace Shel_MeBot
                 else
                 {
                     Console.WriteLine("Who is this neguinho?");
-                    return 0;
+                    return -404;
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error in MaxMindSet: {ex.Message}");
-                return 0;
+                return -404;
             }
 
 
@@ -337,7 +370,7 @@ namespace Shel_MeBot
             try
             {
                 List<Player> players = await Repo.Load();
-                var player = players.FirstOrDefault(p => p.Name == pname);
+                var player = players.FirstOrDefault(p => p.Name.Equals(pname, StringComparison.OrdinalIgnoreCase));
 
                 if (player != null)
                 {
@@ -348,13 +381,13 @@ namespace Shel_MeBot
                 else
                 {
                     Console.WriteLine("Player not found");
-                    return 0;
+                    return -404;
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error in CreatePlayer: {ex.Message}");
-                return 0;
+                return -404;
             }
 
         }
@@ -365,7 +398,7 @@ namespace Shel_MeBot
             {
 
                 List<Player> players = await Repo.Load();
-                var player = players.FirstOrDefault(p => p.Name == pname);
+                var player = players.FirstOrDefault(p => p.Name.Equals(pname, StringComparison.OrdinalIgnoreCase));
 
                 if (player != null)
                 {
@@ -376,13 +409,13 @@ namespace Shel_MeBot
                 else
                 {
                     Console.WriteLine("Player not found");
-                    return 0;
+                    return -404;
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error in MPSet: {ex.Message}");
-                return 0;
+                return -404;
             }
 
         }
@@ -392,7 +425,7 @@ namespace Shel_MeBot
             try
             {
                 List<Player> players = await Repo.Load();
-                var player = players.FirstOrDefault(p => p.Name == pname);
+                var player = players.FirstOrDefault(p => p.Name.Equals(pname, StringComparison.OrdinalIgnoreCase));
 
                 if (player != null)
                 {
@@ -403,13 +436,13 @@ namespace Shel_MeBot
                 else
                 {
                     Console.WriteLine("Player not found");
-                    return 0;
+                    return -404;
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error in MindSet: {ex.Message}");
-                return 0;
+                return -404;
             }
         }
 
@@ -418,7 +451,7 @@ namespace Shel_MeBot
             try
             {
                 List<Player> players = await Repo.Load();
-                var player = players.FirstOrDefault(p => p.Name == pname);
+                var player = players.FirstOrDefault(p => p.Name.Equals(pname, StringComparison.OrdinalIgnoreCase));
 
                 if (player == null)
                 {
@@ -426,8 +459,6 @@ namespace Shel_MeBot
                     return;
                 }
 
-                     
-                               
 
                 player.Info.Add(info);
 
@@ -446,7 +477,7 @@ namespace Shel_MeBot
             {
 
                 List<Player> players = await Repo.Load();
-                var player = players.FirstOrDefault(p => p.Name == pname);
+                var player = players.FirstOrDefault(p => p.Name.Equals(pname, StringComparison.OrdinalIgnoreCase));
 
                 if (player == null)
                 {
@@ -470,12 +501,21 @@ namespace Shel_MeBot
             try
             {
                 var players = await Repo.Load();
-                var player = players.FirstOrDefault(p => p.Name == pname);
+                var player = players.FirstOrDefault(p => p.Name.Equals(pname, StringComparison.OrdinalIgnoreCase));
+                
+
+                if (player == null)
+                {
+                    Console.WriteLine("Player not found.");
+                    return;
+                }
+
+                pname = player.Name;
 
                 ulong MessageId = player.MessageID;
                 ulong ChannelId = player.ChannelID;
 
-                var channel = _bot._client.GetChannel(ChannelId) as IMessageChannel;
+                IMessageChannel channel = await _bot.GetMessageChannelID(ChannelId);
 
                 if (channel == null)
                     return;
@@ -485,7 +525,7 @@ namespace Shel_MeBot
                 if (msg == null)
                     return;
 
-                Embed? novoEmbed = await ShowPlayer(pname);
+                Embed? novoEmbed = await ShowEmbed(pname);
 
                 if (novoEmbed == null)
                     return;
@@ -509,7 +549,7 @@ namespace Shel_MeBot
             try
             {
                 var players = await Repo.Load();
-                var player = players.FirstOrDefault(p => p.Name == pname);
+                var player = players.FirstOrDefault(p => p.Name.Equals(pname, StringComparison.OrdinalIgnoreCase));
 
                 if (player != null)
                 {
@@ -525,37 +565,114 @@ namespace Shel_MeBot
             }
         }
 
-        public async Task<List<string>> RegisteredPlayers() 
+        public async Task<Embed?> RegisteredPlayers()
         {
             try
             {
-                List<string> Regnames = new List<string>();                
+                List<Player> players = await Repo.Load();
 
-                var players = await Repo.Load();
                 if (players.Count == 0)
                 {
                     Console.WriteLine("Nenhum jogador registrado.");
                     return null;
                 }
-                Console.WriteLine("Jogadores registrados:");
+
+                EmbedBuilder embed = new EmbedBuilder()
+                    .WithTitle("Jogadores Registrados")
+                    .WithColor(Color.DarkRed);
                 foreach (var player in players)
                 {
-                    Console.WriteLine($"- {player.Name}");
-                    Regnames.Add(player.Name);
+                    embed.AddField(player.Name, "\u200B");
                 }
 
-                return Regnames;
+                return embed.Build();
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error in RegisteredPlayers: {ex.Message}");
                 return null;
             }
+
+
         }
 
-       
+        public async Task<int> Transform(string pname)
+        {
+            try
+            {
+                var players = await Repo.Load();
+                var player = players.FirstOrDefault(p => p.Name.Equals(pname, StringComparison.OrdinalIgnoreCase));
+                if (player != null && (player.TransPic == null || player.TransPic == ""))
+                {
+                    return 3;
+                }
 
+                else if (player != null && !player.isTransformed)
+                {
+                    player.isTransformed = true;
+                    await Repo.Save(players);
+                    return 1;
+                }
+                else if (player != null && player.isTransformed)
+                {
+                    player.isTransformed = false;
+                    await Repo.Save(players);
+                    return 0;
+                }
+                
+                return 3;
 
+                
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in Transform: {ex.Message}");
+                return 3;
+            }
+        }
 
+        public async Task AddTransPic(string pname, string ppic)
+        {
+            try
+            {
+                var players = await Repo.Load();
+                var player = players.FirstOrDefault(p => p.Name.Equals(pname, StringComparison.OrdinalIgnoreCase));
+
+                if (player != null)
+                {
+                    player.TransPic = ppic;
+                }
+
+                await Repo.Save(players);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in AddTransPic: {ex.Message}");
+                return;
+            }
+        }
+
+        public async Task RenamePlayer(string pname, string nname)
+        {
+            try
+            {
+                var players = await Repo.Load();
+                var player = players.FirstOrDefault(p => p.Name.Equals(pname, StringComparison.OrdinalIgnoreCase));
+                if (player != null)
+                {
+                    player.Name = nname;
+                }
+                else
+                {
+                    return;
+                }
+                await Repo.Save(players);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in RenamePlayer: {ex.Message}");
+                return;
+            }
+        }
     }
-    }
+}

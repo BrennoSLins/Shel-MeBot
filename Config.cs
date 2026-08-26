@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Shel_MeBot
+namespace Shel_MeBot_2
 {
     public class Config
     {

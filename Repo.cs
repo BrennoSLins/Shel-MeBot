@@ -1,13 +1,16 @@
-﻿using System;
+﻿using Shel_MeBot_2;
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using System.IO;
 
-namespace Shel_MeBot
+namespace Shel_MeBot_2;
+
+internal class Repo
 {
-    internal class Repo
-    {
+
         public static async Task<List<Player>> Load()
         {
             if (!File.Exists("Playerlist.json"))
@@ -16,7 +19,7 @@ namespace Shel_MeBot
             }
 
             string json = await File.ReadAllTextAsync("Playerlist.json");
-            
+
 
             return JsonSerializer.Deserialize<List<Player>>(json);
         }
@@ -27,10 +30,8 @@ namespace Shel_MeBot
             {
                 WriteIndented = true
             });
-            
+
             await File.WriteAllTextAsync("Playerlist.json", json);
         }
-    }
 }
-
 

@@ -5,7 +5,7 @@ using System.IO;
 using System.Text;
 using System.Text.Json;
 
-namespace Shel_MeBot
+namespace Shel_MeBot_2
 {
     public class Player
     {
@@ -20,7 +20,10 @@ namespace Shel_MeBot
         public ulong MessageID { get; set; }
         public ulong ChannelID { get; set; }
         public string? CharPic { get; set; }
-       
+
+        public bool isTransformed { get; set; }
+
+        public string? TransPic { get; set; }
 
     }
 }
