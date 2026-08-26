@@ -5,7 +5,7 @@ using System.Text.Json;
 using System.IO;
 using Discord;
 using Microsoft.Extensions.DependencyInjection;
-using Shel_MeBot_2;
+using Shel_MeBotDB;
 
 var provider = DI.Services();
 

@@ -1,4 +1,4 @@
-﻿using Shel_MeBot_2;
+﻿using Shel_MeBotDB;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -6,9 +6,9 @@ using System.Text;
 using System.Text.Json;
 using System.IO;
 
-namespace Shel_MeBot_2;
+namespace Shel_MeBotDB;
 
-internal class Repo
+internal class PlayerRepo
 {
 
         public static async Task<List<Player>> Load()
@@ -33,5 +33,7 @@ internal class Repo
 
             await File.WriteAllTextAsync("Playerlist.json", json);
         }
+
+        
 }
 

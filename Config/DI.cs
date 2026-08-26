@@ -13,7 +13,7 @@ using System.Threading.Channels;
 using System.Windows.Input;
 
 
-namespace Shel_MeBot_2
+namespace Shel_MeBotDB
 {
     public static class DI
     {
@@ -43,9 +43,19 @@ namespace Shel_MeBot_2
             });
 
             services.AddSingleton<Bot>();
-            services.AddSingleton<Service>();
-            services.AddSingleton<Repo>();
-            services.AddSingleton<Commands>();
+            services.AddSingleton<PlayerService>();
+            services.AddSingleton<PlayerRepo>();
+            services.AddSingleton<SlashCommands>();
+            services.AddSingleton<PlayerComponents>();
+            services.AddSingleton<PlayerModals>();
+            services.AddSingleton<WeaponRepo>();
+            services.AddSingleton<WeaponModals>();
+            services.AddSingleton<WeaponsComponents>();
+            services.AddSingleton<WeaponService>();
+            services.AddSingleton<ItemService>();
+            services.AddSingleton<ItemRepo>();
+            services.AddSingleton<ItemComponents>();
+            services.AddSingleton<ItemModals>();
 
             return services.BuildServiceProvider();
         }
